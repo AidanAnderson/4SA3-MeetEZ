@@ -10,10 +10,10 @@ KEY_VAULT_NAME = "MeetEZKeyVault"
 KV_URI = f"https://meetezkeyvault.vault.azure.net/"
 
 # Secret names in Key Vault
-DB_HOST_SECRET = "db-host"
-DB_NAME_SECRET = "db-name"
-DB_USER_SECRET = "db-user"
-DB_PASSWORD_SECRET = "db-password"
+DB_HOST = "db-host"
+DB_NAME = "db-name"
+DB_USER = "db-user"
+DB_PASSWORD = "db-password"
 
 def get_secret(secret_name):
     """Fetch a secret from Azure Key Vault."""
