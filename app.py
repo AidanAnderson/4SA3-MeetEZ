@@ -29,10 +29,11 @@ def get_secret(secret_name):
 def connect_db():
     """Connect to the PostgreSQL database using credentials from Key Vault."""
     try:
-        db_host = get_secret(DB_HOST_SECRET)
-        db_name = get_secret(DB_NAME_SECRET)
-        db_user = get_secret(DB_USER_SECRET)
-        db_password = get_secret(DB_PASSWORD_SECRET)
+        DB_HOST = get_secret("db-host")  # Expected: "meetez-server.postgres.database.azure.com"
+        DB_NAME = get_secret("db-name")  # Expected: "meetez-database"
+        DB_USER = get_secret("db-user")  # Expected: "svpdtcztrg"
+        DB_PASSWORD = get_secret("azure-postgresql-password-bf846")  # Using the existing password secret
+
 
         if not all([db_host, db_name, db_user, db_password]):
             raise ValueError("Missing one or more database credentials.")
