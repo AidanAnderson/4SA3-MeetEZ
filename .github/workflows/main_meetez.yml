@@ -30,20 +30,16 @@ jobs:
           source venv/bin/activate
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r ~/requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
-      - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-app
-          path: |
-            release.zip
-            !venv/
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Move files to correct directory
+        run: |
+          mkdir -p /home/site/wwwroot/
+          cp -r * /home/site/wwwroot/
 
   deploy:
     runs-on: ubuntu-latest
