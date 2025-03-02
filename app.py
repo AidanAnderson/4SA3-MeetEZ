@@ -51,14 +51,50 @@ def connect_db():
 def home():
     return jsonify({"message": "Flask App is Running!"})
 
-@app.route("/db-test")
-def db_test():
+@app.route("/db-conn-test")
+def db__conn_test():
     """ Test database connection """
     conn = connect_db()
     if conn:
         return jsonify({"message": "Database Connection Successful!"})
     else:
         return jsonify({"error": "Failed to connect to the database!"}), 500
+
+@app.route("/db-test")
+def db_test():
+    """ Test database: Write and Read """
+    conn = connect_db()
+    if not conn:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    try:
+        cur = conn.cursor()
+
+        # Step 1: Create table if not exists
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS test_table (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL
+            )
+        """)
+
+        # Step 2: Insert a test record
+        cur.execute("INSERT INTO test_table (name) VALUES (%s) RETURNING id;", ("Test User",))
+        inserted_id = cur.fetchone()[0]
+        conn.commit()
+
+        # Step 3: Retrieve the inserted record
+        cur.execute("SELECT * FROM test_table WHERE id = %s;", (inserted_id,))
+        record = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": "Database Write & Read Successful!", "record": record})
+
+    except Exception as e:
+        return jsonify({"error": f"Database query failed: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
