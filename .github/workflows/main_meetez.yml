@@ -35,11 +35,6 @@ jobs:
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       - name: Checkout repository
         uses: actions/checkout@v3
-      
-      - name: Move files to correct directory
-        run: |
-          mkdir -p /home/site/wwwroot/
-          cp -r * /home/site/wwwroot/
 
   deploy:
     runs-on: ubuntu-latest
