@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 import os
+from datetime import datetime
 import psycopg2
 
 app = Flask(__name__)
