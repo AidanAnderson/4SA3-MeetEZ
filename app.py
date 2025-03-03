@@ -62,7 +62,7 @@ def db__conn_test():
 
 @app.route("/db-test")
 def db_test():
-    """ Test database: Write and Read """
+    """ Test database: Drop old table, Insert and Read Timestamp """
     conn = connect_db()
     if not conn:
         return jsonify({"error": "Failed to connect to the database"}), 500
@@ -70,27 +70,37 @@ def db_test():
     try:
         cur = conn.cursor()
 
-        # Step 1: Create table if not exists
+        # Step 1: Drop the old test_table if it exists
+        cur.execute("DROP TABLE IF EXISTS test_table;")
+
+        # Step 2: Create new test_table
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS test_table (
+            CREATE TABLE test_table (
                 id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL
+                recorded_at TIMESTAMP NOT NULL
             )
         """)
 
-        # Step 2: Insert a test record
-        cur.execute("INSERT INTO test_table (name) VALUES (%s) RETURNING id;", ("Test User",))
+        # Step 3: Insert current timestamp
+        now = datetime.utcnow()
+        cur.execute("INSERT INTO test_table (recorded_at) VALUES (%s) RETURNING id;", (now,))
         inserted_id = cur.fetchone()[0]
         conn.commit()
+        write_message = "Write Successful"
 
-        # Step 3: Retrieve the inserted record
-        cur.execute("SELECT * FROM test_table WHERE id = %s;", (inserted_id,))
-        record = cur.fetchone()
+        # Step 4: Retrieve the last inserted timestamp
+        cur.execute("SELECT recorded_at FROM test_table WHERE id = %s;", (inserted_id,))
+        last_timestamp = cur.fetchone()[0]
+        read_message = "Read Successful"
 
         cur.close()
         conn.close()
 
-        return jsonify({"message": "Database Write & Read Successful!", "record": record})
+        return jsonify({
+            "write_status": write_message,
+            "read_status": read_message,
+            "timestamp": last_timestamp
+        })
 
     except Exception as e:
         return jsonify({"error": f"Database query failed: {str(e)}"}), 500
