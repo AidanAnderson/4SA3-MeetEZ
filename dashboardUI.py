@@ -8,7 +8,13 @@ from adapter import connect_db  # Import from adapter.py
 from app import app  # Import the Flask app
 
 # Initialize Dash with Flask as the server.
-dash_app = dash.Dash(__name__, server=app, url_base_pathname='/dashboard/')
+dash_app = dash.Dash(
+    __name__,
+    server=app,
+    url_base_pathname='/dashboard/',
+    routes_pathname_prefix='/dashboard/',
+    requests_pathname_prefix='/dashboard/'
+)
 
 dash_app.layout = html.Div([
     html.H1("MeetEZ Dashboard UI"),
