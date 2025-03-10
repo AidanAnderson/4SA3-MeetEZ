@@ -77,8 +77,8 @@ class Adapter(metaclass=SingletonMeta):
 # Helper functions to expose a simple interface.
 def connectDB():
     adapter = Adapter()  # Singleton instance
-    return adapter.connect_db()
+    return adapter.connectDB()
 
 def sendEmail(recipient, subject, body):
     adapter = Adapter()
-    return adapter.send_email(recipient, subject, body)
+    return adapter.sendEmail(recipient, subject, body)
