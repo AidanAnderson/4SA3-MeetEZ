@@ -1,5 +1,8 @@
 flask
 psycopg2-binary
+dash
+dash-html-components
+dash-core-components
 azure-identity
 azure-keyvault-secrets
 gunicorn  # Required for running the app on Azure App Service
