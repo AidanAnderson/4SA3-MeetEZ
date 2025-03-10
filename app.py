@@ -61,7 +61,17 @@ def dbTest():
 
     except Exception as e:
         return jsonify({"error": f"Database query failed: {str(e)}"}), 500
-        
+#For Debug, remove before "prod"
+@app.route("/showRoutes")
+def showRoutes():
+    routeList = []
+    for rule in app.url_map.iter_rules():
+        routeList.append({
+            "endpoint": rule.endpoint,
+            "methods": list(rule.methods),
+            "rule": rule.rule
+        })
+    return jsonify(routeList)        
 # Import the UI after the application is fully defined
 #import dashboardUI
 if __name__ == "__main__":
