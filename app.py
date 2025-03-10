@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 from datetime import datetime
-from adapter import connectdb, send_email
+from adapter import connectDB, sendEmail
 
 app = Flask(__name__)
 
@@ -11,7 +11,7 @@ def home():
 @app.route("/db-conn-test")
 def dbConn():
     """ Test database connection """
-    conn = connect_db()
+    conn = connectDB()
     if conn:
         return jsonify({"message": "Database Connection Successful!"})
     else:
@@ -63,6 +63,6 @@ def dbTest():
         return jsonify({"error": f"Database query failed: {str(e)}"}), 500
         
 # Import the UI after the application is fully defined
-import dashboard_ui
+import dashboardUI
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
