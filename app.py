@@ -63,6 +63,6 @@ def dbTest():
         return jsonify({"error": f"Database query failed: {str(e)}"}), 500
         
 # Import the UI after the application is fully defined
-import dashboardUI
+#import dashboardUI
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
