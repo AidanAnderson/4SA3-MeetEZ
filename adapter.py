@@ -32,23 +32,23 @@ class Adapter(metaclass=SingletonMeta):
         self.client = SecretClient(vault_url=self.keyVault, credential=self.credential)
         
         # Retrieve and validate database credentials
-        self.DB_HOST = self.get_secret("db-host")
-        self.DB_NAME = self.get_secret("db-name")
-        self.DB_USER = self.get_secret("db-user")
-        self.DB_PASSWORD = self.get_secret("azure-postgresql-password-bf846")
+        self.DB_HOST = self.getSecret("db-host")
+        self.DB_NAME = self.getSecret("db-name")
+        self.DB_USER = self.getSecret("db-user")
+        self.DB_PASSWORD = self.getSecret("azure-postgresql-password-bf846")
         
         if None in [self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD]:
             raise ValueError("ERROR: One or more database secrets are missing!")
         
         # Initialize email provider API connection details
-        self.email_api_key = self.get_secret("email-api-key")
-        self.email_api_url = self.get_secret("email-api-url")
+        self.email_api_key = self.getSecret("email-api-key")
+        self.email_api_url = self.getSecret("email-api-url")
         # You can initialize your email provider client here if required.
     
     def getSecret(self, secret_name):
         """Fetch a secret from Azure Key Vault."""
         try:
-            return self.client.get_secret(secret_name).value
+            return self.client.getSecret(secret_name).value
         except Exception as e:
             print(f"Error fetching {secret_name}: {e}")
             return None
