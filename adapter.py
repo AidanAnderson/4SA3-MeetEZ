@@ -8,6 +8,16 @@ Focusing on Singleton and Adapter Design Patterns
 Single connection here as well as an adapter to our database so that
 all other connections are made as children to this DBAdapter function
 """
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 10 14:58:16 2025
+
+@author: Aidan
+
+Focusing on Singleton and Adapter Design Patterns 
+Single connection here as well as an adapter to our database so that
+all other connections are made as children to this DBAdapter function
+"""
 
 # adapter.py
 import os
@@ -41,18 +51,17 @@ class Adapter(metaclass=SingletonMeta):
             raise ValueError("ERROR: One or more database secrets are missing!")
         
         # Initialize email provider API connection details
-        self.email_api_key = self.getSecret("email-api-key")
-        self.email_api_url = self.getSecret("email-api-url")
-        # You can initialize your email provider client here if required.
+       # self.email_api_key = self.getSecret("email-api-key")
+       # self.email_api_url = self.getSecret("email-api-url")
     
-    def getSecret(self, secret_name):
-        """Fetch a secret from Azure Key Vault."""
+    def getSecret(self, secretName):
+        """Fetch a secret from Azure Key Vault"""
         try:
-            return self.client.getSecret(secret_name).value
+            return self.client.get_secret(secretName).value
         except Exception as e:
-            print(f"Error fetching {secret_name}: {e}")
+            print(f"Error fetching {secretName}: {e}")
             return None
-    
+
     def connectDB(self):
         """Connect to the PostgreSQL database and return a connection object."""
         try:

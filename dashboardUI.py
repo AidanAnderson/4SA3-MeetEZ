@@ -11,7 +11,6 @@ from app import app  # Import the Flask app
 dash_app = dash.Dash(
     __name__,
     server=app,
-    url_base_pathname='/dashboard/',
     routes_pathname_prefix='/dashboard/',
     requests_pathname_prefix='/dashboard/'
 )
