@@ -4,7 +4,7 @@ import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
 from datetime import datetime
-from adapter import connect_db  # Import from adapter.py
+from adapter import connectDB  # Import from adapter.py
 from app import app  # Import the Flask app
 
 # Initialize Dash with Flask as the server.
@@ -36,7 +36,7 @@ dash_app.layout = html.Div([
 )
 def insertTimestamp(n_clicks):
     if n_clicks > 0:
-        conn = connect_db()
+        conn = connectDB()
         if not conn:
             return "Failed to connect to the database."
         try:
@@ -65,7 +65,7 @@ def insertTimestamp(n_clicks):
     Input("refresh-button", "n_clicks")
 )
 def refreshRecords(n_clicks):
-    conn = connect_db()
+    conn = connectDB()
     if not conn:
         return [html.Li("Failed to connect to the database.")]
     try:
