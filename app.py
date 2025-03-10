@@ -8,7 +8,7 @@ app = Flask(__name__)
 def home():
     return jsonify({"message": "Flask App is Running!"})
 
-@app.route("/db-conn-test")
+@app.route("/dbConn")
 def dbConn():
     """ Test database connection """
     conn = connectDB()
@@ -17,7 +17,7 @@ def dbConn():
     else:
         return jsonify({"error": "Failed to connect to the database!"}), 500
 
-@app.route("/db-test")
+@app.route("/dbTest")
 def dbTest():
     """ Test database: Drop old table, Insert and Read Timestamp """
     conn = connectDB()
