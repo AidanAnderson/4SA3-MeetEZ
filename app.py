@@ -3,6 +3,7 @@ from dash import Dash
 from datetime import datetime
 from adapter import connectDB, sendEmail
 
+
 # Create the Flask app
 app = Flask(__name__)
 app.url_map.strict_slashes = False  # Allow routes with or without trailing slash
@@ -79,8 +80,9 @@ dash_app = Dash(
 )
 
 # Import the layout from dashboardUI.py (no circular import, since dashboardUI.py doesn't import from app.py)
-from dashboardUI import layout
+from dashboardUI import layout, register_callbacks
 dash_app.layout = layout
+register_callbacks(dash_app)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000)

@@ -78,7 +78,7 @@ class Adapter(metaclass=SingletonMeta):
             return None
     
     # Example method for sending an email via your provider.
-    def send_email(self, recipient, subject, body):
+    def sendEmail(self, recipient, subject, body):
         #Placeholder for email integration
         print(f"Sending email to {recipient} with subject '{subject}'")
         return {"status": "Email sent"}
