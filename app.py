@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
+from dash import Dash
 from datetime import datetime
 from adapter import connectDB, sendEmail
 
+# Create the Flask app
 app = Flask(__name__)
-
+app.url_map.strict_slashes = False  # Allow routes with or without trailing slash
 @app.route("/")
 def home():
     return jsonify({"message": "Flask App is Running!"})
@@ -64,16 +66,21 @@ def dbTest():
 
 @app.route("/showRoutes")
 def showRoutes():
-    routeList = []
+    routes = []
     for rule in app.url_map.iter_rules():
-        routeList.append({
-            "endpoint": rule.endpoint,
-            "methods": list(rule.methods),
-            "rule": rule.rule
-        })
-    return jsonify(routeList)
-    
-# Import the UI after the application is fully defined
-import dashboardUI
+        routes.append({"rule": rule.rule, "endpoint": rule.endpoint, "methods": list(rule.methods)})
+    return jsonify(routes)
+
+# Create the Dash app and attach it to the Flask server
+dash_app = Dash(
+    __name__,
+    server=app,
+    url_base_pathname="/dashboard/"
+)
+
+# Import the layout from dashboardUI.py (no circular import, since dashboardUI.py doesn't import from app.py)
+from dashboardUI import layout
+dash_app.layout = layout
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000)
+    app.run(debug=True, port=8000)
