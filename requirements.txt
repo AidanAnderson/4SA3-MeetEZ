@@ -1,7 +1,8 @@
 flask
 psycopg2-binary
 requests
-dash
+dash # Dashboard UI
+sendgrid # Email API
 azure-identity
 azure-keyvault-secrets
 gunicorn  # Required for running the app on Azure App Service
