@@ -1,14 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 10 14:58:16 2025
-
-@author: Aidan
-
-Focusing on Singleton and Adapter Design Patterns 
-Single connection here as well as an adapter to our database so that
-all other connections are made as children to this DBAdapter function
-"""
-# -*- coding: utf-8 -*-
 """
 Created on Mon Mar 10 14:58:16 2025
 
@@ -24,6 +13,9 @@ import os
 import psycopg2
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
 
 # Singleton metaclass to ensure only one instance is created.
 class SingletonMeta(type):
@@ -51,8 +43,7 @@ class Adapter(metaclass=SingletonMeta):
             raise ValueError("ERROR: One or more database secrets are missing!")
         
         # Initialize email provider API connection details
-       # self.email_api_key = self.getSecret("email-api-key")
-       # self.email_api_url = self.getSecret("email-api-url")
+        self.email_api_key = self.getSecret("email-api-key")
     
     def getSecret(self, secretName):
         """Fetch a secret from Azure Key Vault"""
@@ -79,7 +70,22 @@ class Adapter(metaclass=SingletonMeta):
     
     # Example method for sending an email via your provider.
     def sendEmail(self, recipient, subject, body):
-        #Placeholder for email integration
+        
+        message = Mail(
+            from_email='placeholder',
+            to_emails = recipient,
+            subject = subject,
+            html_content = body)
+        
+        try:
+            sg = SendGridAPIClient(self.email_api_key)
+            response = sg.send(message)
+            print(response.status_code)
+            print(response.body)
+            print(response.headers)
+        except Exception as e:
+            print(f'adapter error: {str(e)}')
+            
         print(f"Sending email to {recipient} with subject '{subject}'")
         return {"status": "Email sent"}
 
