@@ -44,7 +44,8 @@ class Adapter(metaclass=SingletonMeta):
         
         # Initialize email provider API connection details
         self.email_api_key = self.getSecret("email-api-key")
-    
+        self.email_address = self.getSecret("email-sender")
+        
     def getSecret(self, secretName):
         """Fetch a secret from Azure Key Vault"""
         try:
@@ -72,7 +73,7 @@ class Adapter(metaclass=SingletonMeta):
     def sendEmail(self, recipient, subject, body):
         
         message = Mail(
-            from_email='placeholder',
+            from_email= self.email_address,
             to_emails = recipient,
             subject = subject,
             html_content = body)
