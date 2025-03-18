@@ -1,81 +1,58 @@
-# dashboardUI.py
-from dash import html, dcc, Input, Output, State
+from dash import html, dcc, Input, Output, dash
+import dash_bootstrap_components as dbc
 from adapter import connectDB, sendEmail
 
-# A single layout that includes both a DB read button and email-sending fields
+# Define the main layout
 layout = html.Div([
-    html.H2("Database Read and Email Sending"),
-
-    # Section 1: Read from DB
-    html.Button("Read from DB", id="read-db-button", n_clicks=0),
-    html.Div(id="db-output", style={"marginTop": "20px"}),
-
-    html.Hr(),
-
-    # Section 2: Send an Email
-    html.H3("Send an Email"),
-    html.Div([
-        html.Label("Recipient:"),
-        dcc.Input(id="email-recipient", type="text", placeholder="Enter recipient email"),
-    ], style={"marginTop": "10px"}),
-
-    html.Div([
-        html.Label("Subject:"),
-        dcc.Input(id="email-subject", type="text", placeholder="Enter email subject"),
-    ], style={"marginTop": "10px"}),
-
-    html.Div([
-        html.Label("Body:"),
-        dcc.Textarea(id="email-body", placeholder="Enter email body", style={"width": "100%", "height": "100px"}),
-    ], style={"marginTop": "10px"}),
-
-    html.Button("Send Email", id="send-email-button", n_clicks=0, style={"marginTop": "10px"}),
-    html.Div(id="email-output", style={"marginTop": "20px"})
+    dcc.Location(id="url", refresh=False),  # Detects URL changes
+    html.Div(id="page-content", children=html.H2("🏠 Loading..."))  # Default
 ])
 
+# Define page layouts
+home_layout = html.Div([
+    html.H2("🏠 Welcome to MeetEZ"),
+    dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary"),
+    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-secondary", style={"marginLeft": "10px"})
+])
+
+add_event_layout = html.Div([
+    html.H2("➕ Add an Event"),
+    dbc.Input(id="user-id", type="number", placeholder="Enter UserID"),
+    dbc.Input(id="event-title", type="text", placeholder="Enter Event Title"),
+    dbc.Textarea(id="event-description", placeholder="Enter Event Description"),
+    dbc.Input(id="event-date", type="date"),
+    dbc.Button("Submit", id="submit-event", color="primary", className="mt-2"),
+    html.Div(id="event-output"),
+    html.Hr(),
+    dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
+    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"})
+])
+
+view_events_layout = html.Div([
+    html.H2("🔍 View and Subscribe to Events"),
+    dbc.Input(id="subscribe-user-id", type="number", placeholder="Enter UserID to subscribe"),
+    dbc.Input(id="subscribe-event-id", type="number", placeholder="Enter EventID to subscribe"),
+    dbc.Button("Subscribe", id="subscribe-btn", color="success", className="mt-2"),
+    html.Div(id="subscribe-output"),
+    html.H3("📅 Available Events"),
+    html.Div(id="events-list"),
+    html.Hr(),
+    dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
+    dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"})
+])
+
+# Callback to update page-content based on the URL
 def register_callbacks(dash_app):
-    """
-    Attach all Dash callbacks here. This prevents circular imports
-    by avoiding direct imports of app.py in this file.
-    """
-
-    # 1. Callback to read from the database
     @dash_app.callback(
-        Output("db-output", "children"),
-        Input("read-db-button", "n_clicks")
+        Output("page-content", "children"),
+        [Input("url", "pathname")]
     )
-    def read_db(n_clicks):
-        if n_clicks == 0:
-            return "Click the button to read from the database."
-        conn = connectDB()
-        if not conn:
-            return "Failed to connect to the database."
-        try:
-            cur = conn.cursor()
-            # Example query: get the current timestamp from the database.
-            cur.execute("SELECT now();")
-            result = cur.fetchone()[0]
-            conn.close()
-            return f"Database current time: {result}"
-        except Exception as e:
-            return f"Database query error: {e}"
-
-    # 2. Callback to send an email
-    @dash_app.callback(
-        Output("email-output", "children"),
-        Input("send-email-button", "n_clicks"),
-        State("email-recipient", "value"),
-        State("email-subject", "value"),
-        State("email-body", "value")
-    )
-    def send_email_callback(n_clicks, recipient, subject, body):
-        if n_clicks == 0:
-            return "Enter email details and click 'Send Email'."
-        if not recipient or not subject or not body:
-            return "Please fill out all fields."
-        try:
-            response = sendEmail(recipient, subject, body)
-            # You can parse `response` if your adapter returns something meaningful
-            return f"Email sent successfully to {recipient}!"
-        except Exception as e:
-            return f"Error sending email: {str(e)}"
+    def display_page(pathname):
+        print(f"Navigating to: {pathname}")  # Debugging log
+        
+        if pathname == "/dashboard/add-event":
+            return add_event_layout
+        elif pathname == "/dashboard/view-events":
+            return view_events_layout
+        else:
+            return home_layout  # Default to home
