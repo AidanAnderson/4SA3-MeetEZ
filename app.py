@@ -1,69 +1,14 @@
 from flask import Flask, jsonify
 from dash import Dash
-from datetime import datetime
-from adapter import connectDB, sendEmail, createSchema
+from adapter import *
 
-
-# Create the Flask app
+# Create Flask app
 app = Flask(__name__)
-app.url_map.strict_slashes = False  # Allow routes with or without trailing slash
+app.url_map.strict_slashes = False
+
 @app.route("/")
 def home():
     return jsonify({"message": "Flask App is Running!"})
-
-@app.route("/dbConn")
-def dbConn():
-    """ Test database connection """
-    conn = connectDB()
-    if conn:
-        return jsonify({"message": "Database Connection Successful!"})
-    else:
-        return jsonify({"error": "Failed to connect to the database!"}), 500
-
-@app.route("/dbTest")
-def dbTest():
-    """ Test database: Drop old table, Insert and Read Timestamp """
-    conn = connectDB()
-    if not conn:
-        return jsonify({"error": "Failed to connect to the database"}), 500
-
-    try:
-        cur = conn.cursor()
-
-        # Step 1: Drop the old test_table if it exists
-        cur.execute("DROP TABLE IF EXISTS test_table;")
-
-        # Step 2: Create new test_table
-        cur.execute("""
-            CREATE TABLE test_table (
-                id SERIAL PRIMARY KEY,
-                recorded_at TIMESTAMP NOT NULL
-            )
-        """)
-
-        # Step 3: Insert current timestamp
-        now = datetime.utcnow()
-        cur.execute("INSERT INTO test_table (recorded_at) VALUES (%s) RETURNING id;", (now,))
-        inserted_id = cur.fetchone()[0]
-        conn.commit()
-        write_message = "Write Successful"
-
-        # Step 4: Retrieve the last inserted timestamp
-        cur.execute("SELECT recorded_at FROM test_table WHERE id = %s;", (inserted_id,))
-        last_timestamp = cur.fetchone()[0]
-        read_message = "Read Successful"
-
-        cur.close()
-        conn.close()
-
-        return jsonify({
-            "write_status": write_message,
-            "read_status": read_message,
-            "timestamp": last_timestamp
-        })
-
-    except Exception as e:
-        return jsonify({"error": f"Database query failed: {str(e)}"}), 500
 
 @app.route("/showRoutes")
 def showRoutes():
@@ -73,19 +18,27 @@ def showRoutes():
     return jsonify(routes)
 
 @app.route("/createSchema")
-def schema():
-    createSchema()
-# Create the Dash app and attach it to the Flask server
+def initSchema():
+    success = createSchema()
+    if success:
+        return jsonify({"message": "Database schema initialized successfully!"})
+    else:
+        return jsonify({"error": "Failed to initialize database schema!"}), 500
+
+
+# Import updated layout & callback function
+from dashboardUI import layout, register_callbacks
+
 dash_app = Dash(
     __name__,
     server=app,
-    url_base_pathname="/dashboard/"
+    url_base_pathname="/dashboard/",
+    suppress_callback_exceptions=True
 )
 
-# Import the layout from dashboardUI.py (no circular import, since dashboardUI.py doesn't import from app.py)
-from dashboardUI import layout, register_callbacks
+# Set layout & register callbacks
 dash_app.layout = layout
 register_callbacks(dash_app)
 
 if __name__ == "__main__":
-    app.run(debug=False, port=8000)
+    app.run(debug=True, port=8000)
