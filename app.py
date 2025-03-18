@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from dash import Dash
 from datetime import datetime
-from adapter import connectDB, sendEmail
+from adapter import connectDB, sendEmail, createSchema
 
 
 # Create the Flask app
@@ -72,6 +72,9 @@ def showRoutes():
         routes.append({"rule": rule.rule, "endpoint": rule.endpoint, "methods": list(rule.methods)})
     return jsonify(routes)
 
+@app.route("/createSchema")
+def schema():
+    createSchema()
 # Create the Dash app and attach it to the Flask server
 dash_app = Dash(
     __name__,

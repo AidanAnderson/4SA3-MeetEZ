@@ -45,7 +45,7 @@ class Adapter(metaclass=SingletonMeta):
         # Initialize email provider API connection details
         self.email_api_key = self.getSecret("email-api-key")
         self.email_address = self.getSecret("email-sender")
-        
+            
     def getSecret(self, secretName):
         """Fetch a secret from Azure Key Vault"""
         try:
@@ -98,3 +98,47 @@ def connectDB():
 def sendEmail(recipient, subject, body):
     adapter = Adapter()
     return adapter.sendEmail(recipient, subject, body)
+
+# Function to setup DB schema
+def createSchema():
+    conn = connectDB()
+    if not conn:
+        print("Failed to connect to the database.")
+        return False
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            
+            CREATE TABLE IF NOT EXISTS events (
+                event_id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                event_date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            );
+            
+            CREATE TABLE IF NOT EXISTS notifications (
+                notification_id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL,
+                event_id INT NOT NULL,
+                subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+                FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE
+            );
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Database schema created successfully.")
+        return True
+    except Exception as e:
+        print(f"Error creating database schema: {e}")
+        return False
