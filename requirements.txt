@@ -2,6 +2,7 @@ flask
 psycopg2-binary
 requests
 dash # Dashboard UI
+dash-bootstrap-components
 sendgrid # Email API
 azure-identity
 azure-keyvault-secrets
