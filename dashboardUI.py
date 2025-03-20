@@ -15,8 +15,10 @@ layout = html.Div([
 # Define page layouts
 home_layout = html.Div([
     html.H2("🏠 Welcome to MeetEZ"),
-    dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary"),
-    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-secondary", style={"marginLeft": "10px"})
+    html.Hr(),
+    dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"}),
+    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"})
+
 ])
 
 add_event_layout = html.Div([
@@ -58,7 +60,7 @@ def register_callbacks(dash_app):
             return add_event_layout
         elif pathname == "/dashboard/view-events":
             return view_events_layout
-        return html.H2("🏠 Home")
+        return home_layout
 
     @dash_app.callback(
         Output("event-output", "children"),
