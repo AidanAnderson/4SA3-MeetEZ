@@ -1,7 +1,6 @@
 import requests
 from dash import html, dcc, Input, Output, State, dash
 import dash_bootstrap_components as dbc
-from adapter import connectDB, sendEmail
 
 # API_URL is defined here so that it can be edited easier
 API_URL = "https://meetez-czgpatgmh8c4cfcz.canadacentral-01.azurewebsites.net"
@@ -86,7 +85,7 @@ def register_callbacks(dash_app):
         Output("events-list", "children"),
         [Input("url", "pathname")]
     )
-    def update_events(pathname):
+    def view_events(pathname):
         if pathname == "/dashboard/view-events":
             try:
                 # Log request for debugging
