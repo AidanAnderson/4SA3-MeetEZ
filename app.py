@@ -91,6 +91,30 @@ def subscribeEvent():
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+@app.route("/addUser", methods=["POST"])
+def addUser():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    email = data.get("email")
+    name = data.get("name")
+
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO users (user_id, email, name)
+            VALUES (%s, %s, %s);
+        """, (user_id, email, name))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "User added successfully!"})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
 
