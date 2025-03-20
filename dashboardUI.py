@@ -86,18 +86,35 @@ def register_callbacks(dash_app):
         Output("events-list", "children"),
         [Input("url", "pathname")]
     )
-    def fetch_events(pathname):
+    def update_events(pathname):
         if pathname == "/dashboard/view-events":
             try:
-                response = requests.get(f"{API_URL}/getEvents")
+                # Log request for debugging
+                print("Fetching events from API...")
+
+                # Call API with a timeout to prevent hanging
+                response = requests.get(f"{API_URL}/getEvents", timeout=5)
+
                 if response.status_code == 200:
                     events = response.json().get("events", [])
-                    return html.Ul([html.Li(f"Event {event[0]}: {event[2]} on {event[4]}") for event in events])
+
+                    # Log event data
+                    print(f"Received events: {events}")
+
+                    if events:
+                        return [html.Div(f"{event}") for event in events]
+                    else:
+                        return "No events available."
                 else:
-                    return "Failed to load events."
-            except requests.exceptions.RequestException as e:
-                return f"API Request Failed: {str(e)}"
-        return ""
+                    return f"API Error: {response.status_code}"
+            except requests.exceptions.Timeout:
+                return "API request timed out!"
+            except Exception as e:
+                return f"API Error: {str(e)}"
+
+        return "Loading..."
+
+
 
     # Subscribe to Event Button 
     @dash_app.callback(
