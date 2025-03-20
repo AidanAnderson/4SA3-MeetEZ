@@ -139,6 +139,7 @@ def createSchema():
         conn.close()
         print("Database schema created successfully.")
         return True
+    
     except Exception as e:
         print(f"Error creating database schema: {e}")
         return False
