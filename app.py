@@ -52,20 +52,35 @@ def addEvent():
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route("/getEvents", methods=["GET"])
+@app.route("/getEvents", methods=["GET"])
 def getEvents():
     conn = connectDB()
     if not conn:
         return jsonify({"error": "Failed to connect to database"}), 500
-    
+
     try:
         cur = conn.cursor()
         cur.execute("SELECT * FROM events;")
-        events = cur.fetchall()
-        cur.close()
+        rows = cur.fetchall()
         conn.close()
+
+        events = [
+            {
+                "event_id": row[0],
+                "user_id": row[1],
+                "title": row[2],
+                "description": row[3],
+                "event_date": row[4],
+                "created_at": row[5]
+            } 
+            for row in rows
+        ]
+
         return jsonify({"events": events})
+
     except Exception as e:
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/subscribeEvent", methods=["POST"])
 def subscribeEvent():
