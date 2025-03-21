@@ -33,6 +33,7 @@ class Adapter(metaclass=SingletonMeta):
         self.credential = DefaultAzureCredential()
         self.client = SecretClient(vault_url=self.keyVault, credential=self.credential)
         
+        self._secrets_cache = {}
         # Retrieve and validate database credentials
         self.DB_HOST = self.getSecret("db-host")
         self.DB_NAME = self.getSecret("db-name")
@@ -50,9 +51,14 @@ class Adapter(metaclass=SingletonMeta):
             raise ValueError("ERROR: One or more email secrets are missing!")
             
     def getSecret(self, secretName):
-        """Fetch a secret from Azure Key Vault"""
+        """Fetch a secret from Azure Key Vault with caching"""
+        if secretName in self._secrets_cache:
+            return self._secrets_cache[secretName]
+
         try:
-            return self.client.get_secret(secretName).value
+            secret_value = self.client.get_secret(secretName).value
+            self._secrets_cache[secretName] = secret_value
+            return secret_value
         except Exception as e:
             print(f"Error fetching {secretName}: {e}")
             return None
