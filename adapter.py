@@ -45,6 +45,9 @@ class Adapter(metaclass=SingletonMeta):
         # Initialize email provider API connection details
         self.email_api_key = self.getSecret("email-api-key")
         self.email_address = self.getSecret("email-sender")
+        
+        if None in [self.email_api_key, self.email_address]:
+            raise ValueError("ERROR: One or more email secrets are missing!")
             
     def getSecret(self, secretName):
         """Fetch a secret from Azure Key Vault"""
@@ -69,6 +72,13 @@ class Adapter(metaclass=SingletonMeta):
             print("Database connection failed:", e)
             return None
     
+    def closeDB(self):
+        """Close the database connection."""
+        if self.conn:
+            self.conn.close()
+            self.connection = None
+            print("Database connection closed successfully!")
+            
     # Example method for sending an email via your provider.
     def sendEmail(self, recipient, subject, body):
         
@@ -94,6 +104,10 @@ class Adapter(metaclass=SingletonMeta):
 def connectDB():
     adapter = Adapter()  # Singleton instance
     return adapter.connectDB()
+
+def closeDB():
+    adapter = Adapter()  # Singleton instance
+    adapter.closeDB()
 
 def sendEmail(recipient, subject, body):
     adapter = Adapter()
