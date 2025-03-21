@@ -25,7 +25,6 @@ def initSchema():
     else:
         return jsonify({"error": "Failed to initialize database schema!"}), 500
 
-
 @app.route("/addEvent", methods=["POST"])
 def addEvent():
     data = request.get_json()  # Read JSON from the request
@@ -91,30 +90,15 @@ def subscribeEvent():
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
-@app.route("/addUser", methods=["POST"])
-def addUser():
-    data = request.get_json()
-    user_id = data.get("user_id")
-    email = data.get("email")
-    name = data.get("name")
-
+@app.route("/dbTestLocal", methods=["GET"])
+def dbTestLocal():
     conn = connectDB()
-    if not conn:
-        return jsonify({"error": "Failed to connect to database"}), 500
-
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO users (user_id, email, name)
-            VALUES (%s, %s, %s);
-        """, (user_id, email, name))
-        conn.commit()
-        cur.close()
+    if conn:
         conn.close()
-        return jsonify({"message": "User added successfully!"})
-    except Exception as e:
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
-
+        return jsonify({"message": "Flask is able to connect to the database locally!"})
+    else:
+        return jsonify({"error": "Flask cannot connect to the database!"}), 500
+    
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
 
