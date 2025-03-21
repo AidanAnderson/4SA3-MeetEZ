@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from dash import Dash
-from adapter import *
+from adapter import connectDB, createSchema, sendEmail
 
 # Create Flask app
 app = Flask(__name__)
@@ -95,9 +95,9 @@ def dbTestLocal():
     conn = connectDB()
     if conn:
         conn.close()
-        return jsonify({"message": "Flask is able to connect to the database locally!"})
+        return jsonify({"message": "✅ Flask is able to connect to the database locally!"})
     else:
-        return jsonify({"error": "Flask cannot connect to the database!"}), 500
+        return jsonify({"error": "❌ Flask cannot connect to the database!"}), 500
     
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
