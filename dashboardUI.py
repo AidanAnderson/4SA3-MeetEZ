@@ -104,30 +104,37 @@ def register_callbacks(dash_app):
                 #Logging API path
                 logger.info(f"{API_URL}/getEvents")
                 response = requests.get(f"{API_URL}/getEvents", timeout=50)
+                logger.info(f"Status: {response.status_code}")
                 
                 if response.status_code == 200:
                     events = response.json().get("events", [])
-                    logger.info(f"Received {len(events)} events from the API")
+                    logger.info(f"Success: Received {len(events)} events from the API")
                     
                     # Log event data
                     print(f"Received events: {events}")
 
                     if events:
-                        return [html.Div(f"{event}") for event in events]
+                        output = []
+                        for e in events:
+                            try:
+                                event_id, user_id, title, description, date = e
+                                output.append(html.Div(f"{event_id}: {title} on {date}"))
+                            except Exception as err:
+                                logger.warning(f"Warning: Failed to parse event row: {e} ({err})")
+                                continue
                     else:
                         return "No events available."
                 else:
-                    logger.error(f"Error fetching events: {response.status_code}")
+                    logger.error(f"Error: Error fetching events: {response.status_code}")
                     return f"API Error: {response.status_code}"
+            
             except requests.exceptions.Timeout:
-                return "API request timed out!"
+                return "API request timed out!"    
             except Exception as e:
-                logger.error(f"API Error: {str(e)}")
+                logger.error(f"Error: API Error: {str(e)}")
                 return f"API Error: {str(e)}"
                 
         return "Loading..."
-
-
 
     # Subscribe to Event Button 
     @dash_app.callback(
