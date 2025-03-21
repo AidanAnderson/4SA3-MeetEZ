@@ -103,7 +103,7 @@ def register_callbacks(dash_app):
                 # Call API with a timeout to prevent hanging
                 #Logging API path
                 logger.info(f"{API_URL}/getEvents")
-                response = requests.get(f"{API_URL}/getEvents", timeout=25)
+                response = requests.get(f"{API_URL}/getEvents", timeout=120)
                 
                 if response.status_code == 200:
                     events = response.json().get("events", [])
