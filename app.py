@@ -114,4 +114,4 @@ dash_app.layout = layout
 register_callbacks(dash_app)
 
 if __name__ == "__main__":
-    app.run(debug=False, port=8000)
+    app.run(debug=False,host="0.0.0.0", port=8000)
