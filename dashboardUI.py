@@ -1,6 +1,12 @@
+import logging
 import requests
 from dash import html, dcc, Input, Output, State, dash
 import dash_bootstrap_components as dbc
+
+
+# Setup logging, API not available still
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # API_URL is defined here so that it can be edited easier
 API_URL = "https://meetez-czgpatgmh8c4cfcz.canadacentral-01.azurewebsites.net"
@@ -34,6 +40,9 @@ add_event_layout = html.Div([
 ])
 
 view_events_layout = html.Div([
+    
+    logger.info("View Events page loaded"),
+    
     html.H2("🔍 View and Subscribe to Events"),
     dbc.Input(id="subscribe-user-id", type="number", placeholder="Enter UserID to subscribe"),
     dbc.Input(id="subscribe-event-id", type="number", placeholder="Enter EventID to subscribe"),
@@ -89,14 +98,17 @@ def register_callbacks(dash_app):
         if pathname == "/dashboard/view-events":
             try:
                 # Log request for debugging
-                print("Fetching events from API...")
+                logger.info("Fetching events from API...")
 
                 # Call API with a timeout to prevent hanging
+                #Logging API path
+                logger.info(f"{API_URL}/getEvents")
                 response = requests.get(f"{API_URL}/getEvents", timeout=5)
-
+                
                 if response.status_code == 200:
                     events = response.json().get("events", [])
-
+                    logger.info(f"Received {len(events)} events from the API")
+                    
                     # Log event data
                     print(f"Received events: {events}")
 
@@ -105,12 +117,14 @@ def register_callbacks(dash_app):
                     else:
                         return "No events available."
                 else:
+                    logger.error(f"Error fetching events: {response.status_code}")
                     return f"API Error: {response.status_code}"
             except requests.exceptions.Timeout:
                 return "API request timed out!"
             except Exception as e:
+                logger.error(f"API Error: {str(e)}")
                 return f"API Error: {str(e)}"
-
+                
         return "Loading..."
 
 
