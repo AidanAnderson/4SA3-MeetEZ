@@ -1,165 +1,117 @@
-"""
-Created on Mon Mar 10 14:58:16 2025
+from flask import Flask, jsonify, request
+from dash import Dash
+from adapter import *
 
-@author: Aidan
+# Create Flask app
+app = Flask(__name__)
+app.url_map.strict_slashes = False
 
-Focusing on Singleton and Adapter Design Patterns 
-Single connection here as well as an adapter to our database so that
-all other connections are made as children to this DBAdapter function
-"""
+@app.route("/")
+def home():
+    return jsonify({"message": "Flask App is Running!"})
 
-# adapter.py
-import os
-import psycopg2
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+@app.route("/showRoutes")
+def showRoutes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({"rule": rule.rule, "endpoint": rule.endpoint, "methods": list(rule.methods)})
+    return jsonify(routes)
 
+@app.route("/createSchema")
+def initSchema():
+    success = createSchema()
+    if success:
+        return jsonify({"message": "Database schema initialized successfully!"})
+    else:
+        return jsonify({"error": "Failed to initialize database schema!"}), 500
 
-# Singleton metaclass to ensure only one instance is created.
-class SingletonMeta(type):
-    _instances = {}
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
-
-class Adapter(metaclass=SingletonMeta):
-    def __init__(self):
-        # Azure Key Vault Configuration
-        self.keyVault = "https://meetezkeyvault.vault.azure.net"
-        self.credential = DefaultAzureCredential()
-        self.client = SecretClient(vault_url=self.keyVault, credential=self.credential)
-        
-        self._secrets_cache = {}
-        # Retrieve and validate database credentials
-        self.DB_HOST = self.getSecret("db-host")
-        self.DB_NAME = self.getSecret("db-name")
-        self.DB_USER = self.getSecret("db-user")
-        self.DB_PASSWORD = self.getSecret("azure-postgresql-password-bf846")
-        
-        if None in [self.DB_HOST, self.DB_NAME, self.DB_USER, self.DB_PASSWORD]:
-            raise ValueError("ERROR: One or more database secrets are missing!")
-        
-        # Initialize email provider API connection details
-        self.email_api_key = self.getSecret("email-api-key")
-        self.email_address = self.getSecret("email-sender")
-        
-        if None in [self.email_api_key, self.email_address]:
-            raise ValueError("ERROR: One or more email secrets are missing!")
-            
-    def getSecret(self, secretName):
-        """Fetch a secret from Azure Key Vault with caching"""
-        if secretName in self._secrets_cache:
-            return self._secrets_cache[secretName]
-
-        try:
-            secret_value = self.client.get_secret(secretName).value
-            self._secrets_cache[secretName] = secret_value
-            return secret_value
-        except Exception as e:
-            print(f"Error fetching {secretName}: {e}")
-            return None
-
-    def connectDB(self):
-        """Connect to the PostgreSQL database and return a connection object."""
-        try:
-            conn = psycopg2.connect(
-                dbname=self.DB_NAME,
-                user=self.DB_USER,
-                password=self.DB_PASSWORD,
-                host=self.DB_HOST,
-                port=5432  # Default PostgreSQL port
-            )
-            return conn
-        except Exception as e:
-            print("Database connection failed:", e)
-            return None
+@app.route("/addEvent", methods=["POST"])
+def addEvent():
+    data = request.get_json()  # Read JSON from the request
+    user_id = data.get("user_id")
+    title = data.get("title")
+    description = data.get("description")
+    event_date = data.get("event_date")
     
-    def closeDB(self):
-        """Close the database connection."""
-        if self.conn:
-            self.conn.close()
-            self.connection = None
-            print("Database connection closed successfully!")
-            
-    # Example method for sending an email via your provider.
-    def sendEmail(self, recipient, subject, body):
-        
-        message = Mail(
-            from_email= self.email_address,
-            to_emails = recipient,
-            subject = subject,
-            html_content = body)
-        
-        try:
-            sg = SendGridAPIClient(self.email_api_key)
-            response = sg.send(message)
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
-        except Exception as e:
-            print(f'adapter error: {str(e)}')
-            
-        print(f"Sending email to {recipient} with subject '{subject}'")
-        return {"status": "Email sent"}
-
-# Helper functions to expose a simple interface.
-def connectDB():
-    adapter = Adapter()  # Singleton instance
-    return adapter.connectDB()
-
-def closeDB():
-    adapter = Adapter()  # Singleton instance
-    adapter.closeDB()
-
-def sendEmail(recipient, subject, body):
-    adapter = Adapter()
-    return adapter.sendEmail(recipient, subject, body)
-
-# Function to setup DB schema
-def createSchema():
     conn = connectDB()
     if not conn:
-        print("Failed to connect to the database.")
-        return False
+        return jsonify({"error": "Failed to connect to database"}), 500
+    
     try:
         cur = conn.cursor()
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                email VARCHAR(100) UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            
-            CREATE TABLE IF NOT EXISTS events (
-                event_id SERIAL PRIMARY KEY,
-                user_id INT NOT NULL,
-                title VARCHAR(255) NOT NULL,
-                description TEXT,
-                event_date DATE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-            );
-            
-            CREATE TABLE IF NOT EXISTS notifications (
-                notification_id SERIAL PRIMARY KEY,
-                user_id INT NOT NULL,
-                event_id INT NOT NULL,
-                subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-                FOREIGN KEY (event_id) REFERENCES events(event_id) ON DELETE CASCADE
-            );
-        """)
+            INSERT INTO events (user_id, title, description, event_date)
+            VALUES (%s, %s, %s, %s) RETURNING event_id;
+        """, (user_id, title, description, event_date))
+        event_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
-        print("Database schema created successfully.")
-        return True
-    
+        return jsonify({"message": "Event added successfully!", "event_id": event_id})
     except Exception as e:
-        print(f"Error creating database schema: {e}")
-        return False
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route("/getEvents", methods=["GET"])
+def getEvents():
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM events;")
+        events = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({"events": events})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route("/subscribeEvent", methods=["POST"])
+def subscribeEvent():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    event_id = data.get("event_id")
+    
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO notifications (user_id, event_id)
+            VALUES (%s, %s);
+        """, (user_id, event_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Subscribed to event successfully!"})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route("/dbTestLocal", methods=["GET"])
+def dbTestLocal():
+    conn = connectDB()
+    if conn:
+        conn.close()
+        return jsonify({"message": "✅ Flask is able to connect to the database locally!"})
+    else:
+        return jsonify({"error": "❌ Flask cannot connect to the database!"}), 500
+    
+# Import updated layout & callback function
+from dashboardUI import layout, register_callbacks
+
+dash_app = Dash(
+    __name__,
+    server=app,
+    url_base_pathname="/dashboard/",
+    suppress_callback_exceptions=True
+)
+
+# Set layout & register callbacks
+dash_app.layout = layout
+register_callbacks(dash_app)
+
+if __name__ == "__main__":
+    app.run(debug=False,host="0.0.0.0", port=8000)
