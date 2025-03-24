@@ -82,7 +82,7 @@ def getEvents():
     
 
 @app.route("/updateEvent", methods=["POST"])
-def update_event():
+def updateEvent():
     data = request.get_json()
     event_id = data.get("event_id")
     title = data.get("title")
@@ -119,7 +119,6 @@ def update_event():
         conn.close()
 
         # 3. Send emails
-        from adapter import sendEmail
         for (email,) in email_rows:
             subject = "Your Event Has Been Updated"
             body = f"""
@@ -135,6 +134,28 @@ def update_event():
             sendEmail(email, subject, body)
 
         return jsonify({"message": "Event updated and notifications sent."})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+@app.route("/deleteEvent", methods=["POST"])
+def delete_event():
+    data = request.get_json()
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return jsonify({"error": "Missing event_id"}), 400
+
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM events WHERE event_id = %s;", (event_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Event deleted successfully."})
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 

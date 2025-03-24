@@ -43,8 +43,8 @@ addEventLayout = html.Div([
 ])
 
 updateEventLayout = html.Div([
-    html.H2("✏️ Update an Existing Event"),
-    
+    html.H2("✏️ Update or Delete an Event"),
+
     dbc.Input(id="updateEventId", type="number", placeholder="Enter Event ID", className="mb-2"),
     dbc.Input(id="updateEventTitle", type="text", placeholder="New Title", className="mb-2"),
     dbc.Textarea(id="updateEventDescription", placeholder="New Description", className="mb-2"),
@@ -52,6 +52,11 @@ updateEventLayout = html.Div([
 
     dbc.Button("Update Event", id="submitUpdateEvent", color="warning", className="mt-2"),
     html.Div(id="updateEventOutput", className="mt-3"),
+
+    html.Hr(),
+
+    dbc.Button("🗑️ Delete Event", id="deleteEventButton", color="danger", className="mt-2"),
+    html.Div(id="deleteEventOutput", className="mt-3"),
 
     html.Hr(),
     dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary")
@@ -221,6 +226,22 @@ def register_callbacks(dash_app):
                 return f"API Request Failed: {str(e)}"
         return ""
 
+    @dash_app.callback(
+        Output("deleteEventOutput", "children"),
+        [Input("deleteEventButton", "n_clicks")],
+        [State("updateEventId", "value")]
+    )
+    def deleteEvent(n_clicks, event_id):
+        if n_clicks and event_id:
+            try:
+                response = requests.post(f"{API_URL}/deleteEvent", json={"event_id": event_id})
+                if response.status_code == 200:
+                    return "Event deleted successfully!"
+                else:
+                    return f"Error: {response.json().get('error', 'Unknown error')}"
+            except requests.exceptions.RequestException as e:
+                return f"API Request Failed: {str(e)}"
+        return ""
 
     # Subscribe to Event Button 
     @dash_app.callback(
