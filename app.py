@@ -113,7 +113,28 @@ def dbTestLocal():
         return jsonify({"message": "✅ Flask is able to connect to the database locally!"})
     else:
         return jsonify({"error": "❌ Flask cannot connect to the database!"}), 500
-    
+
+@app.route("/addUser", methods=["POST"])
+def add_user():
+    data = request.get_json()
+    name = data.get("name")
+    email = data.get("email")
+
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("INSERT INTO users (name, email) VALUES (%s, %s) RETURNING user_id;", (name, email))
+        user_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "User added successfully", "user_id": user_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
 
