@@ -23,7 +23,9 @@ home_layout = html.Div([
     html.Hr(),
     dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"}),
     dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"}),
-    dcc.Link("👥 View Subscribers", href="/dashboard/view-subscribers", className="btn btn-primary", style={"marginLeft": "10px"})
+    dcc.Link("👥 View Subscribers", href="/dashboard/view-subscribers", className="btn btn-primary", style={"marginLeft": "10px"}),
+    dcc.Link("📋 View User Subscriptions", href="/dashboard/view-user-events", className="btn btn-primary", style={"marginLeft": "10px"}),
+    dcc.Link("✏️ Update Event", href="/dashboard/update-event", className="btn btn-warning", style={"marginLeft": "10px"}),
 
 ])
 
@@ -39,6 +41,22 @@ add_event_layout = html.Div([
     dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
     dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"})
 ])
+
+updateEventLayout = html.Div([
+    html.H2("✏️ Update an Existing Event"),
+    
+    dbc.Input(id="updateEventId", type="number", placeholder="Enter Event ID", className="mb-2"),
+    dbc.Input(id="updateEventTitle", type="text", placeholder="New Title", className="mb-2"),
+    dbc.Textarea(id="updateEventDescription", placeholder="New Description", className="mb-2"),
+    dbc.Input(id="updateEventDate", type="date", className="mb-2"),
+
+    dbc.Button("Update Event", id="submitUpdateEvent", color="warning", className="mt-2"),
+    html.Div(id="updateEventOutput", className="mt-3"),
+
+    html.Hr(),
+    dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary")
+])
+
 
 view_events_layout = html.Div([
     
@@ -65,6 +83,16 @@ view_subscribers_layout = html.Div([
     dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
 ])
 
+view_user_events_layout = html.Div([
+    html.H2("📋 View Events Subscribed by User"),
+    dbc.Input(id="user-events-user-id", type="number", placeholder="Enter User ID"),
+    dbc.Button("Fetch Events", id="fetch-user-events-btn", color="primary", className="mt-2"),
+    html.Div(id="user-events-output"),
+    html.Hr(),
+    dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
+])
+
+
 # Callback to update page-content based on the URL
 def register_callbacks(dash_app):
 
@@ -80,7 +108,10 @@ def register_callbacks(dash_app):
             return view_events_layout
         elif pathname == "/dashboard/view-subscribers":
             return view_subscribers_layout
+        elif pathname == "/dashboard/view-user-events":
+            return view_user_events_layout
         return home_layout
+
 
     @dash_app.callback(
         Output("event-output", "children"),
@@ -115,7 +146,7 @@ def register_callbacks(dash_app):
                 # Call API with a timeout to prevent hanging
                 #Logging API path
                 logger.info(f"{API_URL}/getEvents")
-                response = requests.get(f"{API_URL}/getEvents", timeout=120)
+                response = requests.get(f"{API_URL}/getEvents", timeout=5)
                 
                 if response.status_code == 200:
                     events = response.json().get("events", [])
@@ -139,6 +170,54 @@ def register_callbacks(dash_app):
                 
         return "Loading..."
 
+    @dash_app.callback(
+        Output("user-events-output", "children"),
+        [Input("fetch-user-events-btn", "n_clicks")],
+        [State("user-events-user-id", "value")]
+    )
+    def get_user_events(n_clicks, user_id):
+        if n_clicks and user_id:
+            try:
+                response = requests.get(f"{API_URL}/getUserEvents", params={"user_id": user_id})
+                if response.status_code == 200:
+                    events = response.json().get("events", [])
+                    if not events:
+                        return "This user is not subscribed to any events."
+                    return html.Ul([
+                        html.Li(f"ID: {e['event_id']} | Title: {e['title']} | Date: {e['event_date']}")
+                        for e in events
+                    ])
+                else:
+                    return f"Error: {response.json().get('error', 'Unknown error')}"
+            except requests.exceptions.RequestException as e:
+                return f"API Request Failed: {str(e)}"
+        return ""
+
+    @dash_app.callback(
+        Output("updateEventOutput", "children"),
+        [Input("submitUpdateEvent", "n_clicks")],
+        [State("updateEventId", "value"),
+         State("updateEventTitle", "value"),
+         State("updateEventDescription", "value"),
+         State("updateEventDate", "value")]
+    )
+    def updateEvent(n_clicks, eventId, title, description, eventDate):
+        if n_clicks and eventId:
+            data = {
+                "event_id": eventId,
+                "title": title,
+                "description": description,
+                "event_date": eventDate
+            }
+            try:
+                response = requests.post(f"{API_URL}/updateEvent", json=data)
+                if response.status_code == 200:
+                    return "Event updated and notifications sent!"
+                else:
+                    return f"Error: {response.json().get('error', 'Unknown error')}"
+            except requests.exceptions.RequestException as e:
+                return f"API Request Failed: {str(e)}"
+        return ""
 
 
     # Subscribe to Event Button 
@@ -159,7 +238,7 @@ def register_callbacks(dash_app):
             except requests.exceptions.RequestException as e:
                 return f"API Request Failed: {str(e)}"
         return ""
-
+    
     @dash_app.callback(
         Output("subs-output", "children"),
         [Input("fetch-subs-btn", "n_clicks")],
