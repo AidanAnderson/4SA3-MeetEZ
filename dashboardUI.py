@@ -22,7 +22,8 @@ home_layout = html.Div([
     html.H2("🏠 Welcome to MeetEZ"),
     html.Hr(),
     dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"}),
-    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"})
+    dcc.Link("🔍 View Events", href="/dashboard/view-events", className="btn btn-primary", style={"marginLeft": "10px"}),
+    dcc.Link("👥 View Subscribers", href="/dashboard/view-subscribers", className="btn btn-primary", style={"marginLeft": "10px"})
 
 ])
 
@@ -68,6 +69,8 @@ def register_callbacks(dash_app):
             return add_event_layout
         elif pathname == "/dashboard/view-events":
             return view_events_layout
+        elif pathname == "/dashboard/view-subscribers":
+            return view_subscribers_layout
         return home_layout
 
     @dash_app.callback(
@@ -142,6 +145,29 @@ def register_callbacks(dash_app):
                 response = requests.post(f"{API_URL}/subscribeEvent", json=data)
                 if response.status_code == 200:
                     return "Successfully subscribed to the event!"
+                else:
+                    return f"Error: {response.json().get('error', 'Unknown error')}"
+            except requests.exceptions.RequestException as e:
+                return f"API Request Failed: {str(e)}"
+        return ""
+
+    @dash_app.callback(
+        Output("subs-output", "children"),
+        [Input("fetch-subs-btn", "n_clicks")],
+        [State("view-subs-event-id", "value")]
+    )
+    def fetch_subscribers(n_clicks, event_id):
+        if n_clicks and event_id:
+            try:
+                response = requests.get(f"{API_URL}/getSubscribers", params={"event_id": event_id})
+                if response.status_code == 200:
+                    subscribers = response.json().get("subscribers", [])
+                    if not subscribers:
+                        return "No subscribers found for this event."
+                    return html.Ul([
+                        html.Li(f"ID: {s['user_id']} | Name: {s['name']} | Email: {s['email']}")
+                        for s in subscribers
+                    ])
                 else:
                     return f"Error: {response.json().get('error', 'Unknown error')}"
             except requests.exceptions.RequestException as e:
