@@ -135,6 +135,28 @@ def add_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/resequenceUserID", methods=["POST"])
+def reset_user_id_sequence():
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT setval(
+                pg_get_serial_sequence('users', 'user_id'),
+                COALESCE((SELECT MAX(user_id) FROM users), 1),
+                true
+            );
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "User ID sequence reset successfully."})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
 
