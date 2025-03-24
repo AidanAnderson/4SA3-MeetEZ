@@ -56,6 +56,15 @@ view_events_layout = html.Div([
     dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"})
 ])
 
+view_subscribers_layout = html.Div([
+    html.H2("👥 View Subscribers for an Event"),
+    dbc.Input(id="view-subs-event-id", type="number", placeholder="Enter Event ID"),
+    dbc.Button("Fetch Subscribers", id="fetch-subs-btn", color="primary", className="mt-2"),
+    html.Div(id="subs-output"),
+    html.Hr(),
+    dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
+])
+
 # Callback to update page-content based on the URL
 def register_callbacks(dash_app):
 
@@ -156,7 +165,7 @@ def register_callbacks(dash_app):
         [Input("fetch-subs-btn", "n_clicks")],
         [State("view-subs-event-id", "value")]
     )
-    def fetch_subscribers(n_clicks, event_id):
+    def get_subscribers(n_clicks, event_id):
         if n_clicks and event_id:
             try:
                 response = requests.get(f"{API_URL}/getSubscribers", params={"event_id": event_id})
