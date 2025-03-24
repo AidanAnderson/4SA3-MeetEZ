@@ -51,6 +51,40 @@ def addEvent():
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
+@app.route("/getUserEvents", methods=["GET"])
+def get_user_events():
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Missing user_id parameter"}), 400
+
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT e.event_id, e.title, e.description, e.event_date, e.created_at
+            FROM notifications n
+            JOIN events e ON n.event_id = e.event_id
+            WHERE n.user_id = %s;
+        """, (user_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        events = [{
+            "event_id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "event_date": str(r[3]),
+            "created_at": str(r[4])
+        } for r in rows]
+
+        return jsonify({"events": events})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
 @app.route("/getEvents", methods=["GET"])
 def getEvents():
     conn = connectDB()
