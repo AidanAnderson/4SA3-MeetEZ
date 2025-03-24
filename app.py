@@ -52,7 +52,6 @@ def addEvent():
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route("/getEvents", methods=["GET"])
-@app.route("/getEvents", methods=["GET"])
 def getEvents():
     conn = connectDB()
     if not conn:
@@ -81,7 +80,6 @@ def getEvents():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/subscribeEvent", methods=["POST"])
 def subscribeEvent():
     data = request.get_json()
@@ -104,6 +102,34 @@ def subscribeEvent():
         return jsonify({"message": "Subscribed to event successfully!"})
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+    
+@app.route("/getSubscribers", methods=["GET"])
+def get_subscribers():
+    event_id = request.args.get("event_id")
+    if not event_id:
+        return jsonify({"error": "Missing event_id parameter"}), 400
+
+    conn = connectDB()
+    if not conn:
+        return jsonify({"error": "Failed to connect to database"}), 500
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT u.user_id, u.name, u.email
+            FROM notifications n
+            JOIN users u ON n.user_id = u.user_id
+            WHERE n.event_id = %s;
+        """, (event_id,))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        subscribers = [{"user_id": r[0], "name": r[1], "email": r[2]} for r in rows]
+        return jsonify({"subscribers": subscribers})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
 
 @app.route("/dbTestLocal", methods=["GET"])
 def dbTestLocal():
@@ -134,29 +160,7 @@ def add_user():
         return jsonify({"message": "User added successfully", "user_id": user_id})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route("/resequenceUserID", methods=["POST"])
-def reset_user_id_sequence():
-    conn = connectDB()
-    if not conn:
-        return jsonify({"error": "Failed to connect to database"}), 500
-
-    try:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT setval(
-                pg_get_serial_sequence('users', 'user_id'),
-                COALESCE((SELECT MAX(user_id) FROM users), 1),
-                true
-            );
-        """)
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({"message": "User ID sequence reset successfully."})
-    except Exception as e:
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
-
+    
 # Import updated layout & callback function
 from dashboardUI import layout, register_callbacks
 
