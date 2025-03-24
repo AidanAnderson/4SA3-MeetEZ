@@ -18,7 +18,7 @@ layout = html.Div([
 ])
 
 # Define page layouts
-home_layout = html.Div([
+homeLayout = html.Div([
     html.H2("🏠 Welcome to MeetEZ"),
     html.Hr(),
     dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"}),
@@ -29,7 +29,7 @@ home_layout = html.Div([
 
 ])
 
-add_event_layout = html.Div([
+addEventLayout = html.Div([
     html.H2("➕ Add an Event"),
     dbc.Input(id="user-id", type="number", placeholder="Enter UserID"),
     dbc.Input(id="event-title", type="text", placeholder="Enter Event Title"),
@@ -58,7 +58,7 @@ updateEventLayout = html.Div([
 ])
 
 
-view_events_layout = html.Div([
+viewEventsLayout = html.Div([
     
     logger.info("View Events page loaded"),
     
@@ -74,7 +74,7 @@ view_events_layout = html.Div([
     dcc.Link("➕ Add Event", href="/dashboard/add-event", className="btn btn-primary", style={"marginLeft": "10px"})
 ])
 
-view_subscribers_layout = html.Div([
+viewSubscribersLayout = html.Div([
     html.H2("👥 View Subscribers for an Event"),
     dbc.Input(id="view-subs-event-id", type="number", placeholder="Enter Event ID"),
     dbc.Button("Fetch Subscribers", id="fetch-subs-btn", color="primary", className="mt-2"),
@@ -83,7 +83,7 @@ view_subscribers_layout = html.Div([
     dcc.Link("🏠 Home", href="/dashboard/", className="btn btn-secondary"),
 ])
 
-view_user_events_layout = html.Div([
+viewUserEventsLayout = html.Div([
     html.H2("📋 View Events Subscribed by User"),
     dbc.Input(id="user-events-user-id", type="number", placeholder="Enter User ID"),
     dbc.Button("Fetch Events", id="fetch-user-events-btn", color="primary", className="mt-2"),
@@ -103,14 +103,16 @@ def register_callbacks(dash_app):
     )
     def display_page(pathname):
         if pathname == "/dashboard/add-event":
-            return add_event_layout
+            return addEventLayout
         elif pathname == "/dashboard/view-events":
-            return view_events_layout
+            return viewEventsLayout
         elif pathname == "/dashboard/view-subscribers":
-            return view_subscribers_layout
+            return viewSubscribersLayout
         elif pathname == "/dashboard/view-user-events":
-            return view_user_events_layout
-        return home_layout
+            return viewUserEventsLayout
+        elif pathname == "/dashboard/update-event":
+            return updateEventLayout
+        return homeLayout
 
 
     @dash_app.callback(
@@ -201,7 +203,7 @@ def register_callbacks(dash_app):
          State("updateEventDescription", "value"),
          State("updateEventDate", "value")]
     )
-    def updateEvent(n_clicks, eventId, title, description, eventDate):
+    def update_event(n_clicks, eventId, title, description, eventDate):
         if n_clicks and eventId:
             data = {
                 "event_id": eventId,
